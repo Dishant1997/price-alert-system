@@ -6,8 +6,8 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"backend/internal/models"
-	"backend/pkg/database"
+	"price-alert-system/internal/models"
+	"price-alert-system/pkg/database"
 )
 
 func CreateAlert(c *gin.Context) {

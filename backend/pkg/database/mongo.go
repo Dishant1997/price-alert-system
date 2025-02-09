@@ -4,71 +4,67 @@ import (
     "context"
     "log"
     "time"
-    "github.com/joho/godotenv"
+
+    "go.mongodb.org/mongo-driver/bson"
     "go.mongodb.org/mongo-driver/mongo"
     "go.mongodb.org/mongo-driver/mongo/options"
+    "github.com/joho/godotenv"
     "os"
 )
 
-var Client *mongo.Client
+var client *mongo.Client
+var alertCollection *mongo.Collection
 
 func Connect() error {
-    // Load environment variables from .env file
-    if err := godotenv.Load(); err != nil {
-        log.Fatalf("Error loading .env file")
+    // Load .env file
+    err := godotenv.Load()
+    if err != nil {
+        log.Fatalf("Error loading .env file: %v", err)
     }
 
-    // Read values from environment variables
     uri := os.Getenv("MONGODB_URI")
-    database := os.Getenv("MONGODB_DATABASE")
-    collection := os.Getenv("MONGODB_COLLECTION")
+    databaseName := os.Getenv("MONGODB_DATABASE")
+    collectionName := os.Getenv("MONGODB_COLLECTION")
 
-    // Check if any values are missing
-    if uri == "" || database == "" || collection == "" {
-        log.Fatalf("Missing required environment variables!")
-    }
-
-    // Set up MongoDB client options
+    // Set client options
     clientOptions := options.Client().ApplyURI(uri)
-
-    // Create new MongoDB client
-    client, err := mongo.NewClient(clientOptions)
+    client, err = mongo.Connect(context.TODO(), clientOptions)
     if err != nil {
-        log.Printf("Failed to create MongoDB client: %v", err)
         return err
     }
 
-    // Connect to MongoDB
-    ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-    defer cancel()
-
-    err = client.Connect(ctx)
+    // Ping the database
+    err = client.Ping(context.TODO(), nil)
     if err != nil {
-        log.Printf("Failed to connect to MongoDB: %v", err)
         return err
     }
 
-    // Assign client to the global variable
-    Client = client
+    alertCollection = client.Database(databaseName).Collection(collectionName)
     log.Println("Connected to MongoDB!")
-
-    // Log database and collection info
-    log.Printf("Using database: %s, collection: %s", database, collection)
-
     return nil
 }
 
-// GetCollection returns the MongoDB collection from the environment variables
-// func GetCollection() *mongo.Collection {
-//     databaseName := os.Getenv("MONGODB_DATABASE") // Get MongoDB database name from the environment
-//     collectionName := os.Getenv("MONGODB_COLLECTION") // Get MongoDB collection name from the environment
+// GetCollection returns a collection reference
+func GetCollection(database, collection string) *mongo.Collection {
+    return client.Database(database).Collection(collection)
+}
 
-//     // Access the collection
-//     return Client.Database(databaseName).Collection(collectionName)
-// }
+// Example CreateAlert function for reference
+func CreateAlert(user, asset string, priceThreshold float64, above bool) error {
+    alert := bson.M{
+        "user":           user,
+        "asset":          asset,
+        "priceThreshold": priceThreshold,
+        "above":          above,
+        "createdAt":      time.Now().Unix(), // Convert to Unix timestamp
+    }
 
-// GetCollection accepts database and collection names as arguments
-func GetCollection(databaseName, collectionName string) *mongo.Collection {
-    // Access the collection using passed arguments
-    return Client.Database(databaseName).Collection(collectionName)
+    _, err := alertCollection.InsertOne(context.TODO(), alert)
+    if err != nil {
+        log.Printf("Error inserting alert: %v", err)
+        return err
+    }
+
+    log.Println("Alert created successfully")
+    return nil
 }

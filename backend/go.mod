@@ -1,4 +1,4 @@
-module backend
+module price-alert-system
 
 go 1.23.6
 
