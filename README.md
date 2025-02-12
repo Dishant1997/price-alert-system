@@ -36,17 +36,17 @@ The **Price Alert System** is a decentralized application (dApp) designed to mon
    git clone https://github.com/yourusername/price-alert-system.git
    cd price-alert-system
     ```
-2. **Install Dependencies:
+2. **Install Dependencies:**
     ```bash
     go mod tidy
     ```
 
-3. **Run MongoDB Server: Ensure MongoDB is running locally or on a configured server.
+3. **Run MongoDB Server: Ensure MongoDB is running locally or on a configured server.**
 
-4. **Run the Backend:
+4. **Run the Backend:**
     ```bash
     go run cmd/main.go
     ```
 
-5. **Test API Endpoints: Use tools like Postman or cURL to test the API endpoints provided in handlers/price_handler.go.
+5. **Test API Endpoints: Use tools like Postman or cURL to test the API endpoints provided in handlers/price_handler.go.**
 
